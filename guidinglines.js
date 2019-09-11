@@ -9,6 +9,7 @@ export default class GuidingLines {
         this.interval = interval;
         this.bbox = bbox;
         this.referenceLine = referenceLine; // TODO see if this could be a 
+        // this.referenceLineBearing = bearing(firstPoint, lastPoint);
         this.lines = [];
     }
 
@@ -33,8 +34,12 @@ export default class GuidingLines {
 
         //lines.push(linesLeft)
         //lines.push(linesRight)
+        
 
-
+        // For each assign an index in the property field (this will be used when using getClosestLine for styling)
+        // lines.map((line, index) => {
+        //   line.property.id = index;
+        //})
     }
 
     // Change Guiding parameters
@@ -42,16 +47,19 @@ export default class GuidingLines {
         this.bbox = bbox;
         this.interval = interval;
         this.generate();
+        // NB: when changing interval / bbox size, the index will change for the lines, so user needs to call getClosestLineAgain
     }
 
     getClosestLine(position) {
-        // Implement algorithm
-
-        // return line ID
+        // Implement algorithm wrote on paper
+        // --> Draw perpendicular line to bearing of reference line
+        // --> run a binary search on this.lines to get the closest turf.intersectLine() : https://medium.com/hackernoon/programming-with-js-binary-search-aaf86cef9cb3
+        // return line ID + distance to line
     }
 
     // Get guiding lines in geojson to display on a map
     getGeojson() {
         // TODO
+        //turf.featureCollection(this.lines)
     }
 }
