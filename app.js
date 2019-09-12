@@ -20,7 +20,7 @@ map.on("load", function () {
     var referenceLine = [[-121.418961, 40.506229], [-121.412, 40.51]];
     var position = [-121.42,40.51];
 
-    var guidingLines = new GuidingLines(100, referenceLine, bbox);
+    var guidingLines = new GuidingLines(50, referenceLine, bbox);
     var guidingLinesGeojson = guidingLines.generate();
     var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
 
@@ -95,10 +95,38 @@ map.on("load", function () {
         "filter": ["==", "$type", "LineString"],
     });
 
+    map.on('moveend', () => {
+        console.log('moveend');
+        var newBbox = map.getBounds().toArray().flat();
+        var needResizing = !guidingLines.isBiggerThan(newBbox);
+        // If bounds are bigger than the bbox, need to resize the guiding lines
+        if(needResizing) {
+            guidingLines.updateBbox(newBbox);
+
+            var guidingLinesGeojson = guidingLines.generate();
+            var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
+            var closestLine = guidingLines.getClosestLine(position);
+            map.getSource('guiding-lines').setData(guidingLinesGeojson);
+            map.getSource('helper').setData({
+                "type": "FeatureCollection",
+                "features": [
+                    bboxGeojson
+                    , {
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Point",
+                            "coordinates": position
+                        }
+                    },
+                    perpendicularLine,
+                    closestLine.line
+                ]
+            });
+        }
+    })
+
     // TODO Need to use https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions
     // To style current line differently
-
-    
 
     window.guidingLines = guidingLines;
     window.map = map;

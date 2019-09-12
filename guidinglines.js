@@ -17,16 +17,29 @@ export default class GuidingLines {
         this.bbox = bbox;
         this.referenceLine = referenceLine;
         this.lines = [];
+        this.computeDerivedParams();
+    }
 
-        // Computed params
-        this.bboxGeojson = bboxPolygon(bbox);
-        this.referenceLineGeojson = lineString(referenceLine);
+    computeDerivedParams() {
+        this.bboxGeojson = bboxPolygon(this.bbox);
+        this.referenceLineGeojson = lineString(this.referenceLine);
         // Bearing of reference line first and last point
         this.referenceLineBearing = bearing(point(this.referenceLine[0]), point(this.referenceLine[this.referenceLine.length - 1]));
+        this.referenceLineBearingInverse = bearing(point(this.referenceLine[this.referenceLine.length - 1]), point(this.referenceLine[0]));
         console.log(`Reference line bearing: ${this.referenceLineBearing}`);
+        console.log(`Reference line bearing inverse: ${this.referenceLineBearingInverse}`);
         // Bbox diagonal length in meters
-        this.bboxDiagonalLength = distance(point([bbox[0], bbox[1]]), point([bbox[2], bbox[3]]), {units: 'kilometers'}) * 1000;
+        this.bboxDiagonalLength = distance(point([this.bbox[0], this.bbox[1]]), point([this.bbox[2], this.bbox[3]]), {units: 'kilometers'}) * 1000;
         console.log(`bboxDiagonalLength in meters: ${this.bboxDiagonalLength}m`);
+    }
+
+    isBiggerThan(newBbox) {
+        if(booleanContains(this.bboxGeojson, bboxPolygon(newBbox))) {
+            return true;
+        } else {
+            // Need to be resized
+            return false;
+        }
     }
 
     isLineInBbox(line) {
@@ -50,17 +63,35 @@ export default class GuidingLines {
         return lineString([pointA.geometry.coordinates, pointB.geometry.coordinates]);
     }
 
+    expandLine(line) {
+        // if it's not already bigger than bbox (intersecting in 2 points)
+        if(lineIntersect(line, this.bboxGeojson).features.length < 2) {
+            let currentLineCoordinates = line.geometry.coordinates;
+            let newLineCoordinates = [
+                destination(currentLineCoordinates[0], this.bboxDiagonalLength, this.referenceLineBearingInverse, { units: "meters" }).geometry.coordinates,
+                ...currentLineCoordinates,
+                destination(currentLineCoordinates[currentLineCoordinates.length - 1], this.bboxDiagonalLength,  this.referenceLineBearing, { units: "meters" }).geometry.coordinates,
+            ]
+            return lineString(newLineCoordinates);
+        } else {
+            return line;
+        }  
+        
+    }
+
     generate() {
         // Get Bbox
 
-        // Enlarge reference line to meet the bbox size
-        // TODO, enlarge or cut referenceLine to meet the bbox
+        // Expand reference line to meet the bbox size
+        // TODO, this cause pb if not a straith line
+        // TODO, see if we want to cut
+        let referenceLineExpanded =  this.expandLine(this.referenceLineGeojson);
         
         // Create all parallels lines and store them
-        var linesRight = []
-        var linesLeft = []
-        var previousLine = this.referenceLineGeojson;
-        var lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
+        let linesRight = []
+        let linesLeft = []
+        let previousLine = referenceLineExpanded;
+        let lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
 
         // while inside BBOX 
         while (this.isLineInBbox(lineOffsetted)) {
@@ -69,13 +100,12 @@ export default class GuidingLines {
             // Create new parralel line
             previousLine = lineOffsetted;
             lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
-            // TODO, enlarge or cut referenceLine to meet the bbox
+            lineOffsetted = this.expandLine(lineOffsetted);
         }
 
         console.log(`Created ${linesRight.length} to the right`);
 
-
-        var lineOffsetted = lineOffset(this.referenceLineGeojson, -this.interval, { units: "meters" });
+        lineOffsetted = lineOffset(referenceLineExpanded, -this.interval, { units: "meters" });
 
         // while inside BBOX 
         while (this.isLineInBbox(lineOffsetted)) {
@@ -84,13 +114,13 @@ export default class GuidingLines {
             // create new parralel line
             previousLine = lineOffsetted;
             lineOffsetted = lineOffset(previousLine, -this.interval, { units: "meters" });
-            // TODO, enlarge or cut referenceLine to meet the bbox
+            lineOffsetted = this.expandLine(lineOffsetted);
         }
 
         console.log(`Created ${linesLeft.length} to the left`);
 
         this.lines = this.lines.concat(linesLeft)
-        this.lines = this.lines.concat(this.referenceLineGeojson);
+        this.lines = this.lines.concat(referenceLineExpanded);
         this.lines = this.lines.concat(linesRight);
 
         // For each assign an index in the property field (this will be used when using getClosestLine for styling)
@@ -101,19 +131,11 @@ export default class GuidingLines {
         return featureCollection(this.lines);
     }
 
-    // Change Guiding parameters
-    update(bbox, interval) {
-        this.bbox = bbox;
-        this.interval = interval;
-        this.generate();
-        // NB: when changing interval / bbox size, the index will change for the lines, so user needs to call getClosestLineAgain
-    }
-
     getClosestLine(position) {
         // Implement algorithm wrote on paper
         // --> Draw perpendicular line to bearing of reference line
         let perpendicularLine = this.computePerpendicularLine(position, this.referenceLineBearing, this.bboxDiagonalLength);
-        // --> TODO optimize this with a binary search so we don't go threw all the lines
+        // --> TODO optimize this with a binary search so we don't go threw all the lines, recursive function
         let closestLine = {};
         let closestDistance = this.bboxDiagonalLength;
         let currentIntersection = null;
@@ -142,6 +164,20 @@ export default class GuidingLines {
     getGeojson() {
         // TODO
         //turf.featureCollection(this.lines)
+    }
+
+    // Change Guiding parameters
+    update(bbox, interval) {
+        this.bbox = bbox;
+        this.interval = interval;
+        this.generate();
+        // NB: when changing interval / bbox size, the index will change for the lines, so user needs to call getClosestLineAgain
+    }
+
+    updateBbox(bbox) {
+        // NB: when changing interval / bbox size, the index will change for the lines, so user needs to call getClosestLineAgain
+        this.bbox = bbox;
+        this.computeDerivedParams();
     }
 }
 
