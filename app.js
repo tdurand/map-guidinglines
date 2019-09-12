@@ -101,27 +101,29 @@ map.on("load", function () {
         var needResizing = !guidingLines.isBiggerThan(newBbox);
         // If bounds are bigger than the bbox, need to resize the guiding lines
         if(needResizing) {
-            guidingLines.updateBbox(newBbox);
+            var updated = guidingLines.updateBbox(newBbox);
 
-            var guidingLinesGeojson = guidingLines.generate();
-            var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
-            var closestLine = guidingLines.getClosestLine(position);
-            map.getSource('guiding-lines').setData(guidingLinesGeojson);
-            map.getSource('helper').setData({
-                "type": "FeatureCollection",
-                "features": [
-                    bboxGeojson
-                    , {
-                        "type": "Feature",
-                        "geometry": {
-                            "type": "Point",
-                            "coordinates": position
-                        }
-                    },
-                    perpendicularLine,
-                    closestLine.line
-                ]
-            });
+            if(updated) {
+                var guidingLinesGeojson = guidingLines.generate();
+                var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
+                var closestLine = guidingLines.getClosestLine(position);
+                map.getSource('guiding-lines').setData(guidingLinesGeojson);
+                map.getSource('helper').setData({
+                    "type": "FeatureCollection",
+                    "features": [
+                        bboxGeojson
+                        , {
+                            "type": "Feature",
+                            "geometry": {
+                                "type": "Point",
+                                "coordinates": position
+                            }
+                        },
+                        perpendicularLine,
+                        closestLine.line
+                    ]
+                });
+            }
         }
     })
 

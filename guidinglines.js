@@ -6,6 +6,7 @@ import booleanContains from '@turf/boolean-contains';
 import bearing from '@turf/bearing';
 import destination from '@turf/destination';
 import distance from '@turf/distance';
+import center from '@turf/center';
 
 export default class GuidingLines {
 
@@ -80,12 +81,11 @@ export default class GuidingLines {
     }
 
     generate() {
-        // Get Bbox
+        // If reference line isn't inside bbox, return error
         if(!this.isLineInBbox(this.referenceLineGeojson)) {
             console.log(`Error: reference line isn't inside bbox container`)
             return;
         }
-        // TODO if reference line isn't inside bbox, return error
 
         // Expand reference line to meet the bbox size
         // TODO, this cause pb if not a straith line
@@ -141,7 +141,7 @@ export default class GuidingLines {
         // --> Draw perpendicular line to bearing of reference line
         let perpendicularLine = this.computePerpendicularLine(position, this.referenceLineBearing, this.bboxDiagonalLength);
         // --> TODO optimize this with a binary search so we don't go threw all the lines, recursive function
-        let closestLine = {};
+        let closestLine = null;
         let closestDistance = this.bboxDiagonalLength;
         let currentIntersection = null;
         let currentDistance =  this.bboxDiagonalLength;
@@ -179,10 +179,21 @@ export default class GuidingLines {
         // NB: when changing interval / bbox size, the index will change for the lines, so user needs to call getClosestLineAgain
     }
 
-    updateBbox(bbox) {
+    updateBbox(newBbox) {
         // NB: when changing interval / bbox size, the index will change for the lines, so user needs to call getClosestLineAgain
-        this.bbox = bbox;
-        this.computeDerivedParams();
+        // Set closest line to center of bbox as new reference line
+        let bboxCenter = center(bboxPolygon(newBbox));
+        let newReferenceLine = this.getClosestLine(bboxCenter.geometry.coordinates);
+        if(!newReferenceLine) {
+            console.log(`Can't update bbox, you moved too far away from previous bbox location, need to have some overlap to be able to compute it`)
+            return false;
+        } else {
+            console.log('Update Bbox and recompute everything')
+            this.referenceLine = newReferenceLine.line.geometry.coordinates;
+            this.bbox = newBbox;
+            this.computeDerivedParams();
+            return true;
+        }
     }
 }
 
