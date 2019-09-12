@@ -105,6 +105,7 @@ map.on("load", function () {
 
             if(updated) {
                 var guidingLinesGeojson = guidingLines.generate();
+                position = map.getCenter().toArray();
                 var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
                 var closestLine = guidingLines.getClosestLine(position);
                 map.getSource('guiding-lines').setData(guidingLinesGeojson);
