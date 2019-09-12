@@ -81,6 +81,11 @@ export default class GuidingLines {
 
     generate() {
         // Get Bbox
+        if(!this.isLineInBbox(this.referenceLineGeojson)) {
+            console.log(`Error: reference line isn't inside bbox container`)
+            return;
+        }
+        // TODO if reference line isn't inside bbox, return error
 
         // Expand reference line to meet the bbox size
         // TODO, this cause pb if not a straith line

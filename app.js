@@ -18,7 +18,7 @@ map.on("load", function () {
     var bboxGeojson = bboxPolygon(bbox);
 
     var referenceLine = [[-121.418961, 40.506229], [-121.412, 40.51]];
-    var position = [-121.42,40.51];
+    var position = [-121.42,40.515];
 
     var guidingLines = new GuidingLines(50, referenceLine, bbox);
     var guidingLinesGeojson = guidingLines.generate();
