@@ -25,7 +25,6 @@ map.on("load", function () {
     var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
 
     var closestLine = guidingLines.getClosestLine(position);
-    console.log(closestLine);
 
     map.addSource("helper", {
         "type": "geojson",
@@ -40,7 +39,8 @@ map.on("load", function () {
                         "coordinates": position
                     }
                 },
-                perpendicularLine
+                perpendicularLine,
+                closestLine.line
             ]
         }
     });
@@ -51,6 +51,17 @@ map.on("load", function () {
         "type": "geojson",
         "data": guidingLinesGeojson
     })
+
+    map.addLayer({
+        "id": "guidinglines",
+        "type": "line",
+        "source": "guiding-lines",
+        "paint": {
+            "line-color": "green",
+            "line-width": 2
+        },
+        "filter": ["==", "$type", "LineString"],
+    });
 
     map.addLayer({
         "id": "bbox-boundary",
@@ -84,21 +95,10 @@ map.on("load", function () {
         "filter": ["==", "$type", "LineString"],
     });
 
-
-
     // TODO Need to use https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions
     // To style current line differently
 
-    map.addLayer({
-        "id": "guidinglines",
-        "type": "line",
-        "source": "guiding-lines",
-        "paint": {
-            "line-color": "green",
-            "line-width": 2
-        },
-        "filter": ["==", "$type", "LineString"],
-    });
+    
 
     window.guidingLines = guidingLines;
     window.map = map;
