@@ -167,8 +167,7 @@ export default class GuidingLines {
 
     // Get guiding lines in geojson to display on a map
     getGeojson() {
-        // TODO
-        //turf.featureCollection(this.lines)
+        return featureCollection(this.lines);
     }
 
     // Change Guiding parameters
