@@ -1,6 +1,6 @@
 import lineIntersect from '@turf/line-intersect';
 import lineOffset from '@turf/line-offset';
-import { lineString } from '@turf/helpers';
+import { lineString, featureCollection } from '@turf/helpers';
 import bboxPolygon from '@turf/bbox-polygon';
 import booleanContains from '@turf/boolean-contains';
 
@@ -40,6 +40,7 @@ export default class GuidingLines {
         
         // Create all parallels lines and store them
         var linesRight = []
+        var linesLeft = []
         var previousLine = this.referenceLineGeojson;
         var lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
 
@@ -53,25 +54,34 @@ export default class GuidingLines {
             lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
         }
 
+        console.log(`Created ${linesRight.length} to the right`);
+
+
+        var lineOffsetted = lineOffset(this.referenceLineGeojson, -this.interval, { units: "meters" });
+
         // while inside BBOX 
-        //  var line = turf.lineOffset(line, interval, { units: "m" })
-        //  TODO, enlarge or cut line to meet the bbox
-        //  linesRight.add(line)
+        while (this.isLineInBbox(lineOffsetted)) {
+            // Add to line list
+            linesLeft.push(lineOffsetted);
+            // create new parralel line
+            previousLine = lineOffsetted;
+            lineOffsetted = lineOffset(previousLine, -this.interval, { units: "meters" });
+        }
 
-        // var linesLeft = []
-        // while inside BBOX (on the other side)
-        //  var line = turf.lineOffset(line, -interval, { unites: "m"})
-        //  TODO, enlarge or cut line to meet the bbox
-        //  linesLeft.add(line)
+        console.log(`Created ${linesLeft.length} to the left`);
 
-        //lines.push(linesLeft)
-        //lines.push(linesRight)
+
+        this.lines = this.lines.concat(linesLeft)
+        this.lines = this.lines.concat(this.referenceLineGeojson);
+        this.lines = this.lines.concat(linesRight);
         
 
         // For each assign an index in the property field (this will be used when using getClosestLine for styling)
         // lines.map((line, index) => {
         //   line.property.id = index;
         //})
+
+        return featureCollection(this.lines);
     }
 
     // Change Guiding parameters
