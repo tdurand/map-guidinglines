@@ -19,6 +19,10 @@
   "homepage": "https://github.com/tdurand/map-guidinglines#readme",
   "dependencies": {
     "@turf/bbox-polygon": "^6.0.1",
+    "@turf/boolean-contains": "^6.0.1",
+    "@turf/helpers": "^6.1.4",
+    "@turf/line-intersect": "^6.0.2",
+    "@turf/line-offset": "^5.1.5",
     "mapbox-gl": "^1.3.1"
   }
 }

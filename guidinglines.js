@@ -1,4 +1,8 @@
-
+import lineIntersect from '@turf/line-intersect';
+import lineOffset from '@turf/line-offset';
+import { lineString } from '@turf/helpers';
+import bboxPolygon from '@turf/bbox-polygon';
+import booleanContains from '@turf/boolean-contains';
 
 export default class GuidingLines {
 
@@ -8,9 +12,24 @@ export default class GuidingLines {
     constructor(interval = 5, referenceLine, bbox) {
         this.interval = interval;
         this.bbox = bbox;
+        this.bboxGeojson = bboxPolygon(bbox);
         this.referenceLine = referenceLine; // TODO see if this could be a 
+        this.referenceLineGeojson = lineString(referenceLine);
         // this.referenceLineBearing = bearing(firstPoint, lastPoint);
         this.lines = [];
+    }
+
+    isLineInBbox(line) {
+        // Check if Inside, and if it is not, if intersects
+        if(booleanContains(this.bboxGeojson, line)) {
+            return true;
+        } else {
+            if(lineIntersect(this.bboxGeojson, line).features.length > 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
     }
 
     generate() {
@@ -20,7 +39,20 @@ export default class GuidingLines {
         // TODO, enlarge or cut referenceLine to meet the bbox
         
         // Create all parallels lines and store them
-        // var linesRight = []
+        var linesRight = []
+        var previousLine = this.referenceLineGeojson;
+        var lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
+
+        // while inside BBOX 
+        while (this.isLineInBbox(lineOffsetted)) {
+            // Add to line list
+            linesRight.push(lineOffsetted);
+            // create new parralel line
+            console.log('create parralal line');
+            previousLine = lineOffsetted;
+            lineOffsetted = lineOffset(previousLine, this.interval, { units: "meters" });
+        }
+
         // while inside BBOX 
         //  var line = turf.lineOffset(line, interval, { units: "m" })
         //  TODO, enlarge or cut line to meet the bbox

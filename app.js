@@ -17,7 +17,9 @@ map.on("load", function () {
 
     var bboxGeojson = bboxPolygon(bbox);
 
-    var guidingLines = new GuidingLines(10, [[-121.415061, 40.506229], [-121.41, 40.52]], bbox);
+    var referenceLine = [[-121.418961, 40.506229], [-121.412, 40.51]];
+
+    var guidingLines = new GuidingLines(100, referenceLine, bbox);
 
     map.addSource("national-park", {
         "type": "geojson",
@@ -25,18 +27,26 @@ map.on("load", function () {
             "type": "FeatureCollection",
             "features": [
                 bboxGeojson
-            , {
-                "type": "Feature",
-                "geometry": {
-                    "type": "LineString",
-                    "coordinates": [[-121.418961, 40.506229], [-121.412, 40.51]]
+                , {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": referenceLine
+                    }
+                }, { 
+                    "type": "Feature", 
+                    "properties": {}, 
+                    "geometry": { 
+                        "type": "LineString", 
+                        "coordinates": [[-121.41253542917906,40.494367849513544],[-121.40557442917907,40.498138849513545]] 
+                    } 
                 }
-            }]
+            ]
         }
     });
 
     map.addLayer({
-        "id": "park-boundary",
+        "id": "bbox-boundary",
         "type": "fill",
         "source": "national-park",
         "paint": {
@@ -46,8 +56,11 @@ map.on("load", function () {
         "filter": ["==", "$type", "Polygon"]
     });
 
+    // TODO Need to use https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions
+    // To style current line differently
+
     map.addLayer({
-        "id": "park-volcanoes",
+        "id": "guidinglines",
         "type": "line",
         "source": "national-park",
         "paint": {
