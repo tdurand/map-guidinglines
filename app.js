@@ -18,11 +18,15 @@ map.on("load", function () {
     var bboxGeojson = bboxPolygon(bbox);
 
     var referenceLine = [[-121.418961, 40.506229], [-121.412, 40.51]];
+    var position = [-121.42,40.51];
 
     var guidingLines = new GuidingLines(100, referenceLine, bbox);
     var guidingLinesGeojson = guidingLines.generate();
+    var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
 
-    
+    var closestLine = guidingLines.getClosestLine(position);
+    console.log(closestLine);
+
     map.addSource("helper", {
         "type": "geojson",
         "data": {
@@ -33,9 +37,10 @@ map.on("load", function () {
                     "type": "Feature",
                     "geometry": {
                         "type": "Point",
-                        "coordinates": [-121.42,40.51]
+                        "coordinates": position
                     }
-                }
+                },
+                perpendicularLine
             ]
         }
     });
@@ -68,6 +73,17 @@ map.on("load", function () {
         "filter": ["==", "$type", "Point"],
     });
 
+    map.addLayer({
+        "id": "perpendicularline",
+        "type": "line",
+        "source": "helper",
+        "paint": {
+            "line-color": "blue",
+            "line-width": 2
+        },
+        "filter": ["==", "$type", "LineString"],
+    });
+
 
 
     // TODO Need to use https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions
@@ -78,7 +94,7 @@ map.on("load", function () {
         "type": "line",
         "source": "guiding-lines",
         "paint": {
-            "line-color": "red",
+            "line-color": "green",
             "line-width": 2
         },
         "filter": ["==", "$type", "LineString"],
