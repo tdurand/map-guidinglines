@@ -1,0 +1,1 @@
+{"version":3,"sources":["config.js"],"names":["mapboxToken"],"mappings":";;;;;;AAAO,IAAMA,WAAW,GAAG,0FAApB","file":"config.bcd7753d.js","sourceRoot":"..","sourcesContent":["export const mapboxToken = \"pk.eyJ1IjoibWFwczNkIiwiYSI6ImNqd3JwYXYzdDFvZnY0Y29kcWY0YWo0N2MifQ.pNEPoRAdpyjaFP2TTVKTbA\""]}
