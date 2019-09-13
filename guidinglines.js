@@ -27,11 +27,11 @@ export default class GuidingLines {
         // Bearing of reference line first and last point
         this.referenceLineBearing = bearing(point(this.referenceLine[0]), point(this.referenceLine[this.referenceLine.length - 1]));
         this.referenceLineBearingInverse = bearing(point(this.referenceLine[this.referenceLine.length - 1]), point(this.referenceLine[0]));
-        console.log(`Reference line bearing: ${this.referenceLineBearing}`);
-        console.log(`Reference line bearing inverse: ${this.referenceLineBearingInverse}`);
+        //console.log(`Reference line bearing: ${this.referenceLineBearing}`);
+        //console.log(`Reference line bearing inverse: ${this.referenceLineBearingInverse}`);
         // Bbox diagonal length in meters
         this.bboxDiagonalLength = distance(point([this.bbox[0], this.bbox[1]]), point([this.bbox[2], this.bbox[3]]), {units: 'kilometers'}) * 1000;
-        console.log(`bboxDiagonalLength in meters: ${this.bboxDiagonalLength}m`);
+        //console.log(`bboxDiagonalLength in meters: ${this.bboxDiagonalLength}m`);
     }
 
     isBiggerThan(newBbox) {
@@ -111,7 +111,7 @@ export default class GuidingLines {
             lineOffsetted = this.expandLine(lineOffsetted);
         }
 
-        console.log(`Created ${linesRight.length} to the right`);
+        //console.log(`Created ${linesRight.length} to the right`);
 
         lineOffsetted = lineOffset(referenceLineExpanded, -this.interval, { units: "meters" });
 
@@ -125,9 +125,9 @@ export default class GuidingLines {
             lineOffsetted = this.expandLine(lineOffsetted);
         }
 
-        console.log(`Created ${linesLeft.length} to the left`);
+        //console.log(`Created ${linesLeft.length} to the left`);
 
-        this.lines = this.lines.concat(linesLeft)
+        this.lines = this.lines.concat(linesLeft.reverse());
         this.lines = this.lines.concat(referenceLineExpanded);
         this.lines = this.lines.concat(linesRight);
 
@@ -164,10 +164,12 @@ export default class GuidingLines {
             if(intersectionWithBoundA.features.length > 0) {
                 //console.log(`NB Intersection with boundA: ${intersectionWithBoundA.features.length}`)
                 distanceToBoundA = distance(intersectionWithBoundA.features[0], point(position), {units: 'kilometers'}) * 1000;
+                //console.log(`Distance to boundA: ${distanceToBoundA} m`)
             }
             if(intersectionWithBoundB.features.length > 0) {
                 //console.log(`NB Intersection with boundB: ${intersectionWithBoundB.features.length}`)
                 distanceToBoundB = distance(intersectionWithBoundB.features[0], point(position), {units: 'kilometers'}) * 1000;
+                //console.log(`Distance to boundB: ${distanceToBoundB} m`)
             }
 
             // Set new bounds
@@ -178,7 +180,7 @@ export default class GuidingLines {
                 } else {
                     boundA = boundA + Math.floor((boundB - boundA) / 2);
                 }
-                // console.log(`closest to boundB, move boundA to ${boundA}`)
+                //console.log(`closest to boundB, move boundA to ${boundA}`)
                 if(boundA === boundB){
                     closestDistance = distanceToBoundB;
                     found = true;
@@ -190,7 +192,7 @@ export default class GuidingLines {
                 } else {
                     boundB = boundB - Math.floor((boundB - boundA) / 2);
                 }
-                // console.log(`closest to boundA, move boundB to ${boundB}`)
+                //console.log(`closest to boundA, move boundB to ${boundB}`)
                 if(boundA === boundB){
                     closestDistance = distanceToBoundA;
                     found = true;
