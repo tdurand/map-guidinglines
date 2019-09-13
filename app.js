@@ -101,31 +101,34 @@ map.on("load", function () {
         var needResizing = !guidingLines.isBiggerThan(newBbox);
         // If bounds are bigger than the bbox, need to resize the guiding lines
         if(needResizing) {
+            console.log('Update bbox')
             var updated = guidingLines.updateBbox(newBbox);
 
             if(updated) {
+                console.log('Generate guidinglines')
                 var guidingLinesGeojson = guidingLines.generate();
-                position = map.getCenter().toArray();
-                var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
-                var closestLine = guidingLines.getClosestLine(position);
                 map.getSource('guiding-lines').setData(guidingLinesGeojson);
-                map.getSource('helper').setData({
-                    "type": "FeatureCollection",
-                    "features": [
-                        bboxGeojson
-                        , {
-                            "type": "Feature",
-                            "geometry": {
-                                "type": "Point",
-                                "coordinates": position
-                            }
-                        },
-                        perpendicularLine,
-                        closestLine.line
-                    ]
-                });
             }
         }
+
+        console.log('Compute closest line')
+        position = map.getCenter().toArray();
+        var closestLine = guidingLines.getClosestLine(position);
+        map.getSource('helper').setData({
+            "type": "FeatureCollection",
+            "features": [
+                bboxGeojson
+                , {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": position
+                    }
+                },
+                closestLine.perpendicularLine,
+                closestLine.line
+            ]
+        });
     })
 
     // TODO Need to use https://docs.mapbox.com/mapbox-gl-js/style-spec/#expressions

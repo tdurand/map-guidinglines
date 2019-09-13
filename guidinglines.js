@@ -87,6 +87,9 @@ export default class GuidingLines {
             return;
         }
 
+        // Reset lines
+        this.lines = [];
+
         // Expand reference line to meet the bbox size
         // TODO, this cause pb if not a straith line
         // TODO, see if we want to cut
@@ -137,32 +140,72 @@ export default class GuidingLines {
     }
 
     getClosestLine(position) {
-        // Implement algorithm wrote on paper
-        // --> Draw perpendicular line to bearing of reference line
+        // Draw perpendicular line to bearing of reference line
         let perpendicularLine = this.computePerpendicularLine(position, this.referenceLineBearing, this.bboxDiagonalLength);
-        // --> TODO optimize this with a binary search so we don't go threw all the lines, recursive function
-        let closestLine = null;
+
+        // As the list of guiding lines is ordered (parallel lines)
+        // We can perform a binary search to avoid looping through all the list
+        // We could implemnt this with a recursive function also
+        let found = false;
+        let boundA = 0;
+        let boundB = this.lines.length - 1;
+        let distanceToBoundA = this.bboxDiagonalLength;
+        let distanceToBoundB = this.bboxDiagonalLength;
+        let intersectionWithBoundA = null;
+        let intersectionWithBoundB = null;
         let closestDistance = this.bboxDiagonalLength;
-        let currentIntersection = null;
-        let currentDistance =  this.bboxDiagonalLength;
-        this.lines.map((line, index) => {
-            currentIntersection = lineIntersect(perpendicularLine, line);
-            if(currentIntersection.features.length > 0) {
-                // Compute distance to position
-                currentDistance = distance(currentIntersection.features[0], point(position), {units: 'kilometers'}) * 1000;
-                // New closest line
-                if(currentDistance < closestDistance) {
-                    closestLine = {
-                        index: index,
-                        distance: currentDistance,
-                        line: line
-                    }
-                    closestDistance = currentDistance;
+        let closest = null;
+
+        while (!found) {
+            //console.log(`boundA: ${boundA}, boundB: ${boundB}`)
+            // Pick closest bound
+            intersectionWithBoundA = lineIntersect(perpendicularLine, this.lines[boundA]);
+            intersectionWithBoundB = lineIntersect(perpendicularLine, this.lines[boundB]);
+            if(intersectionWithBoundA.features.length > 0) {
+                //console.log(`NB Intersection with boundA: ${intersectionWithBoundA.features.length}`)
+                distanceToBoundA = distance(intersectionWithBoundA.features[0], point(position), {units: 'kilometers'}) * 1000;
+            }
+            if(intersectionWithBoundB.features.length > 0) {
+                //console.log(`NB Intersection with boundB: ${intersectionWithBoundB.features.length}`)
+                distanceToBoundB = distance(intersectionWithBoundB.features[0], point(position), {units: 'kilometers'}) * 1000;
+            }
+
+            // Set new bounds
+            if(distanceToBoundA > distanceToBoundB) {
+                // If 1 between A and B , floor will keep giving same number
+                if(boundB - boundA === 1) {
+                    boundA = boundB;
+                } else {
+                    boundA = boundA + Math.floor((boundB - boundA) / 2);
+                }
+                // console.log(`closest to boundB, move boundA to ${boundA}`)
+                if(boundA === boundB){
+                    closestDistance = distanceToBoundB;
+                    found = true;
+                }
+            } else {
+                // If 1 between A and B , floor will keep giving same number
+                if(boundB - boundA === 1) {
+                    boundB = boundA;
+                } else {
+                    boundB = boundB - Math.floor((boundB - boundA) / 2);
+                }
+                // console.log(`closest to boundA, move boundB to ${boundB}`)
+                if(boundA === boundB){
+                    closestDistance = distanceToBoundA;
+                    found = true;
                 }
             }
-        })
+        }
 
-        return closestLine;
+        closest = {
+            index: boundA,
+            distance: closestDistance,
+            line: this.lines[boundA],
+            perpendicularLine: perpendicularLine
+        }
+
+        return closest;
     }
 
     // Get guiding lines in geojson to display on a map
