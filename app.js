@@ -1,13 +1,36 @@
 import GuidingLines from './guidinglines';
 import bboxPolygon from '@turf/bbox-polygon';
-import { mapboxToken } from './config';
-mapboxgl.accessToken = mapboxToken;
+
+
+var position = [-121.415061, 40.506229];
 
 var map = new mapboxgl.Map({
     container: "map",
-    style: "mapbox://styles/mapbox/outdoors-v11",
-    center: [-121.415061, 40.506229],
-    zoom: 15
+    style: {
+        "version": 8,
+        "sources": {
+            "simple-tiles": {
+                "type": "raster",
+                // point to our third-party tiles. Note that some examples
+                // show a "url" property. This only applies to tilesets with
+                // corresponding TileJSON (such as mapbox tiles). 
+                "tiles": [
+                    "http://a.tile.openstreetmap.org/{z}/{x}/{y}.png",
+                    "http://b.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                ],
+                "tileSize": 256
+            }
+        },
+        "layers": [{
+            "id": "simple-tiles",
+            "type": "raster",
+            "source": "simple-tiles",
+            "minzoom": 0,
+            "maxzoom": 22
+        }]
+    },
+    center: position,
+    zoom: 17
 });
 
 map.on("load", function () {
@@ -18,8 +41,6 @@ map.on("load", function () {
     var bboxGeojson = bboxPolygon(bbox);
 
     var referenceLine = [[-121.418961, 40.506229], [-121.412, 40.51]];
-    var position = [-121.42,40.515];
-
     var guidingLines = new GuidingLines(50, referenceLine, bbox);
     var guidingLinesGeojson = guidingLines.generate();
     var perpendicularLine = guidingLines.computePerpendicularLine(position, guidingLines.referenceLineBearing, guidingLines.bboxDiagonalLength);
@@ -39,7 +60,7 @@ map.on("load", function () {
                         "coordinates": position
                     }
                 },
-                perpendicularLine,
+                //perpendicularLine,
                 closestLine.line
             ]
         }
@@ -125,7 +146,7 @@ map.on("load", function () {
                         "coordinates": position
                     }
                 },
-                closestLine.perpendicularLine,
+                //closestLine.perpendicularLine,
                 closestLine.line
             ]
         });
