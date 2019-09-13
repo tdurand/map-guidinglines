@@ -139,6 +139,9 @@ export default class GuidingLines {
         return featureCollection(this.lines);
     }
 
+    // IDEA: if not fast enough, could build also a memory of last position computation
+    // and restrict even more the number of lines to loop trough because we would know 
+    // distance between last position and new position and could know how many lines could potentialy be in between
     getClosestLine(position) {
         // Draw perpendicular line to bearing of reference line
         let perpendicularLine = this.computePerpendicularLine(position, this.referenceLineBearing, this.bboxDiagonalLength);
